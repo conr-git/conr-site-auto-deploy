@@ -1,0 +1,61 @@
+---
+- name: Configure NGINX server
+  hosts: web
+  become: yes
+  tasks:
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: latest
+    - name: Copy NGINX configuration file
+      copy:
+        src: ./config/nginx.conf
+        dest: /etc/nginx/nginx.conf
+    - name: Ensure NGINX is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+- name: Configure Node.js server
+  hosts: app
+  become: yes
+  tasks:
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: latest
+    - name: Install NPM
+      apt:
+        name: npm
+        state: latest
+    - name: Copy application files
+      copy:
+        src: ./app
+        dest: /opt/nodejs/app
+    - name: Install app dependencies
+      npm:
+        path: /opt/nodejs/app
+
+- name: Configure MongoDB server
+  hosts: db
+  become: yes
+  tasks:
+    - name: Import the public key used by the package management system
+      apt_key:
+        url: https://www.mongodb.org/static/pgp/server-4.4.asc
+        state: present
+    - name: Add MongoDB repository
+      apt_repository:
+        repo: deb http://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse
+        state: present
+    - name: Install MongoDB packages
+      apt:
+        name: mongodb-org
+        state: present
+    - name: Start MongoDB service
+      service:
+        name: mongod
+        state: started
+        enabled: yes
+
